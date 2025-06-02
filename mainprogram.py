@@ -8,7 +8,7 @@ import time
 import pygame
 import uuid
 
-version = "3.0.2"
+version = "3.0.3"
 
 developmentcopy = False
 
@@ -1073,7 +1073,7 @@ def manage_inventory():
             if not files:
                 print("No saved inventories found.")
             else:
-                files = [f for f in files if f not in ["previousinventory.save", "trader.save"]]
+                files = [f for f in files if f not in ["previousinventory.save", "trader.save", "transfers.save"]]
                 if not files:
                     print("No saved inventories found.")
                 else:
@@ -1323,7 +1323,7 @@ def manage_inventory():
         elif choice == 8:
             os.system("cls" if os.name == "nt" else "clear")
             print("Delete Save Files")
-            files = [f for f in os.listdir(saves_folder) if f.endswith(".save") and f not in ["previousinventory.save", "trader.save"]]
+            files = [f for f in os.listdir(saves_folder) if f.endswith(".save") and f not in ["previousinventory.save", "trader.save", "transfers.save"]]
             if not files:
                 print("No saved inventories found.")
             else:
@@ -1426,6 +1426,7 @@ def manage_inventory():
                     ids = load_transfer_ids()
                     if transfer_id in ids:
                         print("This transfer has already been imported. Cannot import again.")
+                        os.remove(transfer_file)
                         return
                     transfer_time_str = item_data.get("transfer_time")
                     if transfer_time_str:
@@ -1436,12 +1437,15 @@ def manage_inventory():
                             seconds_passed = calendar.timegm(now) - calendar.timegm(transfer_time)
                             if seconds_passed > 30 * 60:
                                 print("This transfer file is older than 30 minutes and cannot be imported.")
+                                os.remove(transfer_file)
                                 return
                         except Exception as e:
                             print(f"Error parsing transfer time: {e}")
+                            os.remove(transfer_file)
                             return
                     else:
                         print("No transfer time found in file.")
+                        os.remove(transfer_file)
                         return
                     if item_data.get("transfer_type") == "gold":
                         amount = item_data.get("amount", 0)
@@ -1450,19 +1454,27 @@ def manage_inventory():
                             print(f"Imported ${amount} gold into your account.")
                         else:
                             print("Invalid gold amount in transfer file.")
+                        ids.append(transfer_id)
+                        save_transfer_ids(ids)
+                        os.remove(transfer_file)
                     else:
                         total_slots = item_data["inventoryslots"] * item_data["quantity"]
                         if freeslots < total_slots:
                             print("Not enough free slots in your inventory to import this item.")
+                            os.remove(transfer_file)
                             return
                         current_inventory.append(item_data)
                         freeslots -= total_slots
                         print(f"Imported {item_data['quantity']}x '{item_data['name']}' into your inventory.")
-                    ids.append(transfer_id)
-                    save_transfer_ids(ids)
-                    os.remove(transfer_file)
+                        ids.append(transfer_id)
+                        save_transfer_ids(ids)
+                        os.remove(transfer_file)
                 except Exception as e:
                     print(f"Error importing transfer file: {e}")
+                    try:
+                        os.remove(transfer_file)
+                    except Exception:
+                        pass
             while True:
                 os.system("cls" if os.name == "nt" else "clear")
                 print("Item Transfer")
