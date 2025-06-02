@@ -6,8 +6,9 @@ import requests
 from packaging import version as ver
 import time
 import pygame
+import uuid
 
-version = "3.0.1"
+version = "3.0.2"
 
 developmentcopy = False
 
@@ -222,6 +223,8 @@ healing_and_magic = [
     {"name": "Small ornate locket", "value": 5, "description": "A small spherical ornate silver locket on a chain that when opened provides a soft blue glow and provides a constant healing effect. Prolonged exposure may result in death. (SCP-427)", "rarity": "legendary", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 105},
     {"name": "Red unmarked pill", "value": 25, "description": "A small red pill that when consumed heals all ailments and injuries. (SCP-500)", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 0, "id": 106},
     {"name": "Phoenix Feather", "value": 50, "description": "A magical feather that can revive the dead.", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 107},
+    {"name": "Compound Red", "value": 150, "description": "A rather... unclean needle with a red liquid inside. Used to stave off eldritchification.", "rarity": "common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 166},
+    {"name": "Compound Blue", "value": 250, "description": "A needle enclosed in a sterile bag with a handwritten label denoting that it is compound blue. The handwriting is overtly girly and signed Erin Baker.", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 167}
 ]
 
 cursed_and_blessed_items = [
@@ -1047,7 +1050,7 @@ def manage_inventory():
         print("")
         options = ["Create New Inventory", "Save Current Inventory", "Load Inventory", "View Current Inventory", 
                    "Remove Item from Inventory", "Move Items to/from Storage", "Transfer Saves from Previous Versions", 
-                   "Delete Saves", "Back to Main Menu"]
+                   "Delete Saves", "Transfer Items to Other Players", "Back to Main Menu"]
         print_menu(options)
         choice = get_user_choice(len(options))
 
@@ -1335,6 +1338,149 @@ def manage_inventory():
                 else:
                     print("Deletion canceled.")
         elif choice == 9:
+            transfer_folder = "./transfer"
+            transfers_save_file = os.path.join(saves_folder, "transfers.save")
+            def load_transfer_ids():
+                if not os.path.exists(transfers_save_file):
+                    return []
+                try:
+                    with open(transfers_save_file, "r") as f:
+                        encoded = f.read()
+                        return json.loads(base64.b64decode(encoded).decode("utf-8"))
+                except Exception:
+                    return []
+            def save_transfer_ids(ids):
+                try:
+                    encoded = base64.b64encode(json.dumps(ids).encode("utf-8")).decode("utf-8")
+                    with open(transfers_save_file, "w") as f:
+                        f.write(encoded)
+                except Exception as e:
+                    print(f"Error saving transfer ids: {e}")
+            def transfer_item_out():
+                global current_inventory, freeslots
+                if not current_inventory:
+                    print("Your inventory is empty. Nothing to transfer.")
+                    return
+                os.makedirs(transfer_folder, exist_ok=True)
+                print("Select an item to transfer:")
+                for i, item in enumerate(current_inventory, start=1):
+                    print(f"[{i}] {item['name']} (Quantity: {item['quantity']}, Slots: {item['inventoryslots']})")
+                item_choice = get_user_choice(len(current_inventory))
+                selected_item = current_inventory[item_choice - 1]
+                print(f"How many '{selected_item['name']}' would you like to transfer? (1-{selected_item['quantity']}):")
+                quantity_to_transfer = get_user_choice(selected_item['quantity'])
+                transfer_id = str(uuid.uuid4())
+                item_data = selected_item.copy()
+                item_data["quantity"] = quantity_to_transfer
+                item_data["transfer_id"] = transfer_id
+                item_data["transfer_time"] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                item_data["transfer_type"] = "item"
+                safe_name = "".join(c for c in item_data["name"] if c.isalnum() or c in (' ', '_', '-')).rstrip()
+                transfer_file = os.path.join(transfer_folder, f"{safe_name}.transfer")
+                encoded_item = base64.b64encode(json.dumps(item_data).encode("utf-8")).decode("utf-8")
+                with open(transfer_file, "w") as f:
+                    f.write(encoded_item)
+                selected_item["quantity"] -= quantity_to_transfer
+                freeslots += selected_item["inventoryslots"] * quantity_to_transfer
+                if selected_item["quantity"] == 0:
+                    current_inventory.pop(item_choice - 1)
+                print(f"Transferred {quantity_to_transfer}x '{item_data['name']}' to {transfer_file}.")
+            def transfer_gold_out():
+                global gold
+                if gold <= 0:
+                    print("You have no gold to transfer.")
+                    return
+                os.makedirs(transfer_folder, exist_ok=True)
+                print(f"You have ${gold} gold.")
+                print("How much gold would you like to transfer? (1-{})".format(gold))
+                amount = get_user_choice(gold)
+                transfer_id = str(uuid.uuid4())
+                gold_data = {
+                    "transfer_type": "gold",
+                    "amount": amount,
+                    "transfer_id": transfer_id,
+                    "transfer_time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                }
+                transfer_file = os.path.join(transfer_folder, f"gold_{transfer_id}.transfer")
+                encoded_gold = base64.b64encode(json.dumps(gold_data).encode("utf-8")).decode("utf-8")
+                with open(transfer_file, "w") as f:
+                    f.write(encoded_gold)
+                gold -= amount
+                print(f"Transferred ${amount} gold to {transfer_file}.")
+            def transfer_item_in():
+                global current_inventory, freeslots, gold
+                os.makedirs(transfer_folder, exist_ok=True)
+                files = [f for f in os.listdir(transfer_folder) if f.endswith(".transfer")]
+                if not files:
+                    print("No transfer files found.")
+                    return
+                print("Available transfer files:")
+                print_menu(files)
+                file_choice = get_user_choice(len(files))
+                transfer_file = os.path.join(transfer_folder, files[file_choice - 1])
+                try:
+                    with open(transfer_file, "r") as f:
+                        encoded_item = f.read()
+                        item_data = json.loads(base64.b64decode(encoded_item).decode("utf-8"))
+                    transfer_id = item_data.get("transfer_id")
+                    ids = load_transfer_ids()
+                    if transfer_id in ids:
+                        print("This transfer has already been imported. Cannot import again.")
+                        return
+                    transfer_time_str = item_data.get("transfer_time")
+                    if transfer_time_str:
+                        try:
+                            import calendar
+                            transfer_time = time.strptime(transfer_time_str, "%Y-%m-%d %H:%M:%S")
+                            now = time.gmtime()
+                            seconds_passed = calendar.timegm(now) - calendar.timegm(transfer_time)
+                            if seconds_passed > 30 * 60:
+                                print("This transfer file is older than 30 minutes and cannot be imported.")
+                                return
+                        except Exception as e:
+                            print(f"Error parsing transfer time: {e}")
+                            return
+                    else:
+                        print("No transfer time found in file.")
+                        return
+                    if item_data.get("transfer_type") == "gold":
+                        amount = item_data.get("amount", 0)
+                        if amount > 0:
+                            gold += amount
+                            print(f"Imported ${amount} gold into your account.")
+                        else:
+                            print("Invalid gold amount in transfer file.")
+                    else:
+                        total_slots = item_data["inventoryslots"] * item_data["quantity"]
+                        if freeslots < total_slots:
+                            print("Not enough free slots in your inventory to import this item.")
+                            return
+                        current_inventory.append(item_data)
+                        freeslots -= total_slots
+                        print(f"Imported {item_data['quantity']}x '{item_data['name']}' into your inventory.")
+                    ids.append(transfer_id)
+                    save_transfer_ids(ids)
+                    os.remove(transfer_file)
+                except Exception as e:
+                    print(f"Error importing transfer file: {e}")
+            while True:
+                os.system("cls" if os.name == "nt" else "clear")
+                print("Item Transfer")
+                options = ["Transfer Item", "Transfer Gold", "Import Item", "Back"]
+                print_menu(options)
+                choice = get_user_choice(len(options))
+                if choice == 1:
+                    transfer_item_out()
+                elif choice == 2:
+                    transfer_gold_out()
+                elif choice == 3:
+                    transfer_item_in()
+                elif choice == 4:
+                    break
+                if current_inventory_name:
+                    save_inventory_to_file(current_inventory, current_inventory_name)
+                input("Press any key to continue...")
+        elif choice == 10:
             break
         input("Press any key to continue...")
 
@@ -2401,6 +2547,7 @@ def devtools():
                     item_minrand = input("Enter minimum quantity: ")
                     item_maxrand = input("Enter maximum quantity: ")
                     item_inventoryslots = input("Enter inventory slots: ")
+                    item_quantity = input("Enter quantity: ")
                     new_item = {
                         "name": item_name,
                         "value": int(item_value),
@@ -2408,7 +2555,8 @@ def devtools():
                         "rarity": item_rarity,
                         "minrand": int(item_minrand),
                         "maxrand": int(item_maxrand),
-                        "inventoryslots": int(item_inventoryslots)
+                        "inventoryslots": int(item_inventoryslots),
+                        "quantity": int(item_quantity)
                     }
                     current_inventory.append(new_item)
                     print(f"Added custom item '{item_name}' to inventory.")
