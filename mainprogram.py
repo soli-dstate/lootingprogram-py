@@ -8,9 +8,8 @@ import time
 import uuid
 import zipfile
 import shutil
-import glob
 
-version = "3.0.4"
+version = "3.0.5"
 
 developmentcopy = False
 
@@ -1578,8 +1577,19 @@ def manage_inventory():
             while True:
                 os.system("cls" if os.name == "nt" else "clear")
                 slots = ["torso", "head", "back", "shoulder", "waist", "face", "undertorso", "shoes", "special", "wrist", "exit"]
+                dynamic_slots = []
+                torso_equipped = equipped_items.get("torso")
+                if torso_equipped and torso_equipped.get("id") in [54, 118]:
+                    dynamic_slots.append("armorplate_front")
+                    dynamic_slots.append("armorplate_back")
+                    for i in range(1, 4):
+                        dynamic_slots.append(f"platecarrier_{i}")
+                back_equipped = equipped_items.get("back")
+                if back_equipped and back_equipped.get("id") == 80:
+                    dynamic_slots.append("back_armorplate")
+                all_slots = slots[:-1] + dynamic_slots + [slots[-1]]
                 print("Equipable Slots:")
-                for idx, slot in enumerate(slots, 1):
+                for idx, slot in enumerate(all_slots, 1):
                     if slot == "exit":
                         print(f"[{idx}] Exit")
                         continue
@@ -1587,17 +1597,35 @@ def manage_inventory():
                     rating = ""
                     if equipped and isinstance(equipped, dict):
                         rating = equipped.get("armorrating", "")
-                    print(f"[{idx}] {slot.capitalize()} (Equipped: {equipped['name'] if equipped else 'None'}"
+                    slot_display = slot
+                    if slot == "armorplate_front":
+                        slot_display = "Front Armor Plate"
+                    elif slot == "armorplate_back":
+                        slot_display = "Back Armor Plate"
+                    elif slot.startswith("platecarrier_"):
+                        slot_display = "Vest Pouch"
+                    elif slot == "back_armorplate":
+                        slot_display = "Backpack Armor Plate"
+                    else:
+                        slot_display = slot.capitalize()
+                    print(f"[{idx}] {slot_display} (Equipped: {equipped['name'] if equipped else 'None'}"
                           f"{', Armor: ' + str(rating) if rating else ''})")
-                choice = get_user_choice(len(slots))
-                slot_name = slots[choice - 1]
+                choice = get_user_choice(len(all_slots))
+                slot_name = all_slots[choice - 1]
                 if slot_name == "exit":
                     break
                 current_equipped = equipped_items.get(slot_name)
-                slot_items = [item for item in current_inventory if item.get("slot") == slot_name]
-                print(f"\n{slot_name.capitalize()} Items in Inventory:")
+                if slot_name in ["armorplate_front", "armorplate_back", "back_armorplate"]:
+                    slot_items = [item for item in current_inventory if item.get("slot") == "armorplate"]
+                elif slot_name.startswith("platecarrier"):
+                    slot_items = [item for item in current_inventory if item.get("slot") == "platecarrier"]
+                elif slot_name.startswith("torso_extra"):
+                    slot_items = []
+                else:
+                    slot_items = [item for item in current_inventory if item.get("slot") == slot_name]
+                print(f"\n{slot_name.replace('_', ' ').capitalize()} Items in Inventory:")
                 if not slot_items:
-                    print(f"No {slot_name} items in inventory.")
+                    print(f"No {slot_name.replace('_', ' ')} items in inventory.")
                 else:
                     for i, item in enumerate(slot_items, 1):
                         ar = item.get("armorrating", "")
