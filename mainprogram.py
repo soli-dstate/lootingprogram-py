@@ -9,7 +9,7 @@ import uuid
 import zipfile
 import shutil
 
-version = "3.0.5"
+version = "3.0.6"
 
 developmentcopy = False
 
@@ -2940,7 +2940,7 @@ def check_for_updates():
                             pass
                         print("Update complete. Please restart the program.")
                         input("Press Enter to exit...")
-                        exit(0)
+                        os._exit(0)
                     else:
                         print(f"Update available! Current version: {version}, Latest version: {latest_version}")
                         print("Would you like to update now? (y/n): ", end="")
@@ -2992,7 +2992,7 @@ def check_for_updates():
                             pass
                         print("Update complete. Please restart the program.")
                         input("Press Enter to exit...")
-                        exit(0)
+                        os._exit(0)
             else:
                 print("You are using the latest version.")
         else:
