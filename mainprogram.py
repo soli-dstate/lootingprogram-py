@@ -5,10 +5,12 @@ import base64
 import requests
 from packaging import version as ver
 import time
-import pygame
 import uuid
+import zipfile
+import shutil
+import glob
 
-version = "3.0.3"
+version = "3.0.4"
 
 developmentcopy = False
 
@@ -20,6 +22,18 @@ tradershop = []
 questitems = []
 gold = 0
 saves_folder = "./saves"
+equipped_items = {
+    "torso": None,
+    "head": None,
+    "back": None,
+    "shoulder": None,
+    "waist": None,
+    "face": None,
+    "undertorso": None,
+    "shoes": None,
+    "special": None,
+    "wrist": None
+}
 
 incompatible_saves = [
     "3.0.0developmentcopy",
@@ -38,6 +52,7 @@ def save_inventory_to_file(inventory, file_name):
             "freeslots": freeslots,
             "storage": storage,
             "gold": gold,
+            "equipped_items": equipped_items
         }
         encoded_data = base64.b64encode(json.dumps(data_to_save).encode("utf-8")).decode("utf-8")
         with open(file_path, "w") as file:
@@ -47,7 +62,7 @@ def save_inventory_to_file(inventory, file_name):
         print(f"Error saving inventory: {e}")
 
 def load_inventory_from_file(file_name):
-    global freeslots, storage, gold
+    global freeslots, storage, gold, equipped_items
     file_path = os.path.join(saves_folder, file_name)
     try:
         with open(file_path, "r") as file:
@@ -56,6 +71,7 @@ def load_inventory_from_file(file_name):
             freeslots = data_loaded.get("freeslots", 10)
             storage = data_loaded.get("storage", [])
             gold = data_loaded.get("gold", 0)
+            equipped_items = data_loaded.get("equipped_items", {})
             return data_loaded.get("inventory", [])
     except FileNotFoundError:
         print(f"Error: File {file_path} does not exist.")
@@ -279,17 +295,67 @@ cursed_and_blessed_items = [
     {"name": "Yukari’s Bag", "value": 5000, "description": "A lost bag belonging to a brilliant mechanical engineer from Oarai. (allows the usage of 2 special tech items when combined with the ‘ANNA Watch’.", "rarity": "Mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 0, "id": 156, "slot": "wrist", "addedslots": 15},
 ]
 
+junk = [
+    {"name": "Wood board", "value": 5, "description": "A cut board made from pine.", "rarity": "common", "minrand": 1, "maxrand": 5, "inventoryslots": 2, "id": 169},
+    {"name": "Steel tube", "value": 15, "description": "A rusted out chunk of steel tubing.", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 2, "id": 170},
+    {"name": "PVC pipe", "value": 2, "description": "A length of plastic tubing.", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 171},
+    {"name": "Sheet metal", "value": 25, "description": "A rusty piece of sheet metal, probably steel.", "rarity": "uncommon", "minrand": 1, "maxrand": 2, "inventoryslots": 5, "id": 172},
+    {"name": "Welding wire", "value": 50, "description": "A spindle of MIG welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 173},
+    {"name": "Welding wire", "value": 165, "description": "A length of TIG welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 174},
+    {"name": "Sling", "value": 15, "description": "A simple sling for weapons.", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 175, "slot": "shoulder", "addedslots": 2},
+    {"name": "Welding wire", "value": 50, "description": "A spindle of welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 176},
+    {"name": "Empty can", "value": 1, "description": "An empty can, appears to be made of tin, was probably food at some point.", "rarity": "common", "minrand": 1, "maxrand": 7, "inventoryslots": 1, "id": 177},
+    {"name": "Empty can", "value": 2, "description": "An empty can, appears to be made of aluminum, probably was a drink of sorts.", "rarity": "common", "minrand": 1, "maxrand": 12, "inventoryslots": 1, "id": 178},
+    {"name": "Empty plastic bag", "value": 0, "description": "A plastic bag that's weak and falling apart, no good for carrying items.", "rarity": "common", "minrand": 1, "maxrand": 1, "inventoryslots": 0, "id": 179},
+    {"name": "Candy bar", "value": 5, "description": "It's your favorite candy bar! Aw shucks, it's expired though. Probably tastes like the souls of the damned.", "rarity": "uncommon", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 180},
+    {"name": "Soda", "value": 7, "description": "It's your favorite soda! Aw shucks, it's expired though. Probably tastes like the blood of the damned. Flat too, flatter than your mom!", "rarity": "uncommon", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 181},
+    {"name": "Motor oil", "value": 15, "description": "A quart bottle of motor oil. It smells horrible and has metal chunks all up in it, it's probably used...", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 182},
+    {"name": "Glass bottle", "value": 2, "description": "An empty glass bottle that still has the stench of beer. You should smash it against a legion footsoldier's skull! Or your friends, I don't really care.", "rarity": "common", "minrand": 1, "maxrand": 24, "inventoryslots": 2, "id": 183},
+    {"name": "Screwdriver", "value": 15, "description": "A simple handheld screwdriver. Good for screwing and/or stabbing!", "rarity": "uncommon", "minrand": 1, "maxrand": 5, "inventoryslots": 1, "id": 184},
+    {"name": "Pry bar", "value": 15, "description": "A crowbar but it has a handle. Good for... uh... prying...?", "rarity": "uncommon", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 185},
+    {"name": "Drill", "value": 75, "description": "A battery operated drill. It's uh... a drill.", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 186},
+    {"name": "Handsaw", "value": 10, "description": "A saw. But hand operated. Good for dismemberment if you try hard enough!", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 187},
+    {"name": "Circular saw", "value": 10, "description": "A saw. But electric. This one is really good for dismemberment!", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 188},
+    {"name": "Grinder", "value": 35, "description": "A grinder. You use it to grind. Better get on that grind real quick! HAAAAH, I'm so funny.", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 189},
+    {"name": "Match", "value": 1, "description": "Aw yep, that's a match right there.", "rarity": "common", "minrand": 1, "maxrand": 50, "inventoryslots": 1, "id": 190},
+    {"name": "Wristwatch", "value": 10, "description": "A watch, but for your wrist? What a novel idea!", "rarity": "common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 191, "slot": "wrist"},
+    {"name": "Literally garbage", "value": 0, "description": "Yeah... that's literally garbage...", "rarity": "common", "minrand": 1, "maxrand": 15, "inventoryslots": 1, "id": 192},
+    {"name": "Car battery", "value": 125, "description": "A 12 volt lead acid car battery. It's kinda hefty.", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 3, "id": 193},
+    {"name": "Fusion cell", "value": 25000, "description": "A small, enclosed, controlled nuclear fusion in a tube providing a steady warmth and power output of well over 15 KW. Don't drop it!", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 7, "id": 194},
+    {"name": "Fusion battery", "value": 500, "description": "A tiny, enclosed, controlled nuclear fusion in a AA battery-sized tube, providing warmth and a power output of 500 W. Don't drop it!", "rarity": "rare", "minrand": 1, "maxrand": 5, "inventoryslots": 7, "id": 195},
+    {"name": "Gasoline", "value": 50, "description": "A jerry can full of gasoline that somehow hasn't evaporated or gone bad.", "rarity": "mythic", "minrand": 1, "maxrand": 2, "inventoryslots": 3, "id": 196},
+    {"name": "Rock", "value": 500, "description": "I call it big rock. Rhymes with Grug.", "rarity": "rare", "minrand": 1, "maxrand": 4, "inventoryslots": 15, "id": 197},
+    {"name": "Pebble", "value": 0.01, "description": "I call it pebble. Rhymes with Grug.", "rarity": "common", "minrand": 1, "maxrand": 1000000, "inventoryslots": 1, "id": 198},
+    {"name": "Pocket sand", "value": 1, "description": "It's a ziploc bag full of sand with 'Pocket Sand' labelled on it in sharpie. [Blinds enemies for 1 turn]", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 199},
+]
+
 traderspecificitems = [
     {"name": "Cheese", "value": 30, "description": "Cheesed to meet you :3 (Heals on consumption)", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 157},
     {"name": "Sake", "value": 30, "description": "Made by yours truely!", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 158},
     {"name": "S. POTION", "value": 150, "description": "the Super Potion! (heals all wounds, before promptly unhealing them after battle)", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 159},
     {"name": "B. Shot Bowtie", "value": 150, "description": "Gives you +50 defence! (Gives +1 strength, +1 resistance, & +1 magic when equipped)", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 160},
     {"name": "Multi Colored Glasses", "value": 500, "description": "Now’s your chance. (Sells items with a 2x bonus & given +2 charisma when worn)", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 161},
-    {"name": "Guilded Samurai Armor", "value": 1000, "description": "Some old armor I used to wear, still very useful. (Grants +1 agility & gives entire body tier III armor)", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 162},
+    {"name": "Gilded Samurai Armor", "value": 1000, "description": "Some old armor I used to wear, still very useful. (Grants +1 agility & gives entire body tier III armor)", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 162},
     {"name": "Imperial Blade", "value": 500, "description": "Some surplus weaponry from my home! Still sharp. (+1 agility when used)", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 163},
     {"name": "Broken Sword", "value": 100000, "description": "A legendary sword wielded by a fierce warrior from legends, it smites anything struck with it!", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 164},
     {"name": "Golden Key", "value": 1000, "description": "Not sure where I got it from, but it's cool!", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 165},
 ]
+
+all_tables = [
+    test_table, melee_weapons, ranged_weapons, ammo, armor_and_defense,
+    healing_and_magic, cursed_and_blessed_items, junk, traderspecificitems
+]
+seen_ids = {}
+for table in all_tables:
+    for item in table:
+        item_id = item.get("id")
+        if item_id is not None:
+            if item_id in seen_ids:
+                raise Exception(
+                    f"Conflicting item id detected: {item_id} "
+                    f"('{seen_ids[item_id]['name']}' and '{item['name']}')"
+                )
+            seen_ids[item_id] = item
 
 traderitemdescriptions = [
     {"id": 0, "traderdesc": "A favorite among the unsavory… or those with horrible dental hygiene."},
@@ -448,7 +514,9 @@ traderitemdescriptions = [
     {"id": 153, "traderdesc": "Ew… smells like coffee."},
     {"id": 154, "traderdesc": "..."},
     {"id": 155, "traderdesc": "I dunno what it is but it keeps making fun of me when I talk to it."},
-    {"id": 156, "traderdesc": "A bag with an anglerfish emblem on the back of it."}
+    {"id": 156, "traderdesc": "A bag with an anglerfish emblem on the back of it."},
+    {"id": 166, "traderdesc": "I'm not sure what this is..."},
+    {"id": 167, "traderdesc": "I'm not sure what this is..."},
 ]
 
 caliberinfo = [
@@ -1050,7 +1118,7 @@ def manage_inventory():
         print("")
         options = ["Create New Inventory", "Save Current Inventory", "Load Inventory", "View Current Inventory", 
                    "Remove Item from Inventory", "Move Items to/from Storage", "Transfer Saves from Previous Versions", 
-                   "Delete Saves", "Transfer Items to Other Players", "Back to Main Menu"]
+                   "Delete Saves", "Transfer Items to Other Players", "Equip Items", "Back to Main Menu"]
         print_menu(options)
         choice = get_user_choice(len(options))
 
@@ -1493,6 +1561,107 @@ def manage_inventory():
                     save_inventory_to_file(current_inventory, current_inventory_name)
                 input("Press any key to continue...")
         elif choice == 10:
+            global equipped_items
+            if equipped_items is None:
+                equipped_items = {
+                    "torso": None,
+                    "head": None,
+                    "back": None,
+                    "shoulder": None,
+                    "waist": None,
+                    "face": None,
+                    "undertorso": None,
+                    "shoes": None,
+                    "special": None,
+                    "wrist": None
+                }
+            while True:
+                os.system("cls" if os.name == "nt" else "clear")
+                slots = ["torso", "head", "back", "shoulder", "waist", "face", "undertorso", "shoes", "special", "wrist", "exit"]
+                print("Equipable Slots:")
+                for idx, slot in enumerate(slots, 1):
+                    if slot == "exit":
+                        print(f"[{idx}] Exit")
+                        continue
+                    equipped = equipped_items.get(slot)
+                    rating = ""
+                    if equipped and isinstance(equipped, dict):
+                        rating = equipped.get("armorrating", "")
+                    print(f"[{idx}] {slot.capitalize()} (Equipped: {equipped['name'] if equipped else 'None'}"
+                          f"{', Armor: ' + str(rating) if rating else ''})")
+                choice = get_user_choice(len(slots))
+                slot_name = slots[choice - 1]
+                if slot_name == "exit":
+                    break
+                current_equipped = equipped_items.get(slot_name)
+                slot_items = [item for item in current_inventory if item.get("slot") == slot_name]
+                print(f"\n{slot_name.capitalize()} Items in Inventory:")
+                if not slot_items:
+                    print(f"No {slot_name} items in inventory.")
+                else:
+                    for i, item in enumerate(slot_items, 1):
+                        ar = item.get("armorrating", "")
+                        print(f"[{i}] {item['name']} (Rarity: {item['rarity']}, Slots: {item['inventoryslots']}, "
+                              f"Added Slots: {item.get('addedslots', 0)}, Armor: {ar if ar else 'N/A'}, Quantity: {item['quantity']})")
+                if current_equipped:
+                    print(f"\nCurrently equipped: {current_equipped['name']}")
+                    if current_equipped.get("armorrating"):
+                        print(f"Armor Rating: {current_equipped['armorrating']}")
+                    if current_equipped.get("curseofbinding"):
+                        print("This item has a curse of binding and cannot be removed.")
+                    else:
+                        print("Would you like to dequip the current item? (y/n): ", end="")
+                        deq = input().strip().lower()
+                        if deq == "y":
+                            slots_to_remove = current_equipped.get("addedslots", 0)
+                            found = False
+                            for inv_item in current_inventory:
+                                if inv_item["name"] == current_equipped["name"]:
+                                    inv_item["quantity"] += 1
+                                    found = True
+                                    break
+                            if not found:
+                                item_copy = current_equipped.copy()
+                                item_copy["quantity"] = 1
+                                current_inventory.append(item_copy)
+                            if slots_to_remove > 0:
+                                if freeslots - slots_to_remove < 0:
+                                    print("Cannot dequip: not enough free slots to remove this item.")
+                                else:
+                                    freeslots -= slots_to_remove
+                                    equipped_items[slot_name] = None
+                                    print(f"Dequipped {current_equipped['name']}. Removed {slots_to_remove} slots.")
+                            else:
+                                equipped_items[slot_name] = None
+                                print(f"Dequipped {current_equipped['name']}.")
+                            if current_inventory_name:
+                                save_inventory_to_file(current_inventory, current_inventory_name)
+                else:
+                    if slot_items:
+                        print(f"\nSelect an item to equip (or 0 to cancel):")
+                        for i, item in enumerate(slot_items, 1):
+                            ar = item.get("armorrating", "")
+                            print(f"[{i}] {item['name']} (Added Slots: {item.get('addedslots', 0)}, Armor: {ar if ar else 'N/A'}, Quantity: {item['quantity']})")
+                        print("[0] Cancel")
+                        sel = get_user_choice(len(slot_items)+1)
+                        if sel == 0 or sel == len(slot_items)+1:
+                            continue
+                        item = slot_items[sel-1]
+                        if item.get("curseofbinding"):
+                            print("This item has a curse of binding and cannot be removed once equipped.")
+                        else:
+                            slots_to_add = item.get("addedslots", 0)
+                            item["quantity"] -= 1
+                            if item["quantity"] == 0:
+                                current_inventory.remove(item)
+                            freeslots += slots_to_add
+                            equipped_items[slot_name] = item.copy()
+                            equipped_items[slot_name]["quantity"] = 1
+                            print(f"Equipped {item['name']}. Added {slots_to_add} slots.")
+                            if current_inventory_name:
+                                save_inventory_to_file(current_inventory, current_inventory_name)
+                input("Press any key to continue...")
+        elif choice == 11:
             break
         input("Press any key to continue...")
 
@@ -2661,7 +2830,141 @@ def check_for_updates():
                     developmentcopy = True
                 else:
                     print(f"Update available! Current version: {version}, Latest version: {latest_version}")
-                    print("Please visit the repository to download the latest version.")
+                    print("Would you like to update now? (y/n): ", end="")
+                    update_choice = input().strip().lower()
+                    if update_choice != "y":
+                        print("Update skipped. You can update later by restarting the program.")
+                        return
+                    print("Attempting to auto-update from GitHub...")
+                    current_dir = os.path.dirname(os.path.abspath(__file__))
+                    if os.name == "nt":
+                        exe_name = None
+                        for name in os.listdir(current_dir):
+                            if name.lower().endswith(".exe"):
+                                exe_name = name
+                                break
+                        if not exe_name:
+                            for name in os.listdir(current_dir):
+                                if name.lower().endswith(".py"):
+                                    exe_name = name
+                                    break
+                        zip_url = None
+                        possible_names = [
+                            "loot.python_compiled.zip",
+                            "loot-python-compiled.zip",
+                            "lootpython.zip",
+                            "main.zip"
+                        ]
+                        try:
+                            releases = requests.get("https://api.github.com/repos/soli-dstate/lootingprogram-py/releases").json()
+                            if isinstance(releases, list) and releases:
+                                for asset in releases[0].get("assets", []):
+                                    if asset["name"].endswith(".zip"):
+                                        zip_url = asset["browser_download_url"]
+                                        break
+                        except Exception:
+                            pass
+                        if not zip_url:
+                            for name in possible_names:
+                                test_url = f"https://github.com/soli-dstate/lootingprogram-py/raw/main/{name}"
+                                r = requests.head(test_url)
+                                if r.status_code == 200:
+                                    zip_url = test_url
+                                    break
+                        if not zip_url:
+                            print("Could not find update zip file automatically. Please update manually.")
+                            return
+                        print(f"Downloading update from: {zip_url}")
+                        r = requests.get(zip_url, stream=True)
+                        update_zip = os.path.join(current_dir, "update_temp.zip")
+                        with open(update_zip, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        print("Download complete. Extracting update...")
+                        extract_folder = os.path.join(current_dir, "loot_update_temp")
+                        with zipfile.ZipFile(update_zip, "r") as zip_ref:
+                            zip_ref.extractall(extract_folder)
+                        new_file = None
+                        for root, dirs, files in os.walk(extract_folder):
+                            for file in files:
+                                if file.lower().endswith(".exe") or file.lower().endswith(".py"):
+                                    new_file = os.path.join(root, file)
+                                    break
+                            if new_file:
+                                break
+                        if not new_file:
+                            print("Could not find new program file in update. Update failed.")
+                            return
+                        if exe_name:
+                            try:
+                                os.remove(os.path.join(current_dir, exe_name))
+                            except Exception:
+                                pass
+                        shutil.copy2(new_file, current_dir)
+                        print(f"Updated file copied to {current_dir}.")
+                        try:
+                            os.remove(update_zip)
+                        except Exception:
+                            pass
+                        try:
+                            shutil.rmtree(extract_folder)
+                        except Exception:
+                            pass
+                        print("Update complete. Please restart the program.")
+                        input("Press Enter to exit...")
+                        exit(0)
+                    else:
+                        print(f"Update available! Current version: {version}, Latest version: {latest_version}")
+                        print("Would you like to update now? (y/n): ", end="")
+                        update_choice = input().strip().lower()
+                        if update_choice != "y":
+                            print("Update skipped. You can update later by restarting the program.")
+                            return
+                        print("Attempting to auto-update from GitHub...")
+                        py_name = None
+                        for name in os.listdir(current_dir):
+                            if name.lower().endswith(".py"):
+                                py_name = name
+                                break
+                        src_url = "https://github.com/soli-dstate/lootingprogram-py/archive/refs/heads/main.zip"
+                        r = requests.get(src_url, stream=True)
+                        update_zip = os.path.join(current_dir, "update_source_temp.zip")
+                        with open(update_zip, "wb") as f:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        print("Download complete. Extracting source code...")
+                        extract_folder = os.path.join(current_dir, "loot_update_source")
+                        with zipfile.ZipFile(update_zip, "r") as zip_ref:
+                            zip_ref.extractall(extract_folder)
+                        new_py = None
+                        for root, dirs, files in os.walk(extract_folder):
+                            for file in files:
+                                if file == "mainprogram.py":
+                                    new_py = os.path.join(root, file)
+                                    break
+                            if new_py:
+                                break
+                        if not new_py:
+                            print("Could not find new mainprogram.py in update. Update failed.")
+                            return
+                        if py_name:
+                            try:
+                                os.remove(os.path.join(current_dir, py_name))
+                            except Exception:
+                                pass
+                        shutil.copy2(new_py, os.path.join(current_dir, "mainprogram.py"))
+                        print(f"Updated mainprogram.py copied to {current_dir}.")
+                        try:
+                            os.remove(update_zip)
+                        except Exception:
+                            pass
+                        try:
+                            shutil.rmtree(extract_folder)
+                        except Exception:
+                            pass
+                        print("Update complete. Please restart the program.")
+                        input("Press Enter to exit...")
+                        exit(0)
             else:
                 print("You are using the latest version.")
         else:
@@ -2689,34 +2992,70 @@ def main():
                 print("No inventory loaded! Please load or create an inventory first.")
                 input("Press any key to continue...")
             else:
-                categories_with_weights = {
-                    "ammo": 25,
-                    "healing_and_magic": 25,
-                    "melee_weapons": 15,
-                    "armor_and_defense": 15,
-                    "ranged_weapons": 15,
-                    "cursed_and_blessed_items": 5
-                }
-                category_key = random.choices(
-                    list(categories_with_weights.keys()),
-                    weights=categories_with_weights.values(),
-                    k=1
-                )[0]
-                category_mapping = {
-                    "melee_weapons": melee_weapons,
-                    "ranged_weapons": ranged_weapons,
-                    "ammo": ammo,
-                    "armor_and_defense": armor_and_defense,
-                    "healing_and_magic": healing_and_magic,
-                    "cursed_and_blessed_items": cursed_and_blessed_items
-                }
-                category = category_mapping[category_key]
-                total_items = random.randint(1, 3)
-                for item_number in range(1, total_items + 1):
+                os.system("cls" if os.name == "nt" else "clear")
+                opts = ["Chest", "Other"]
+                print_menu(opts)
+                choice = get_user_choice(len(opts))
+                if choice == 1:
                     os.system("cls" if os.name == "nt" else "clear")
-                    category = category_mapping[category_key]
-                    print(f"Pulling item {item_number} of {total_items}.")
-                    main_logic(category)
+                    categories_with_weights = {
+                        "ammo": 25,
+                        "healing_and_magic": 25,
+                        "melee_weapons": 15,
+                        "armor_and_defense": 15,
+                        "ranged_weapons": 15,
+                        "cursed_and_blessed_items": 5
+                    }
+                    category_mapping = {
+                        "melee_weapons": melee_weapons,
+                        "ranged_weapons": ranged_weapons,
+                        "ammo": ammo,
+                        "armor_and_defense": armor_and_defense,
+                        "healing_and_magic": healing_and_magic,
+                        "cursed_and_blessed_items": cursed_and_blessed_items
+                    }
+                    total_items = random.randint(1, 3)
+                    for item_number in range(1, total_items + 1):
+                        os.system("cls" if os.name == "nt" else "clear")
+                        category_key = random.choices(
+                            list(categories_with_weights.keys()),
+                            weights=categories_with_weights.values(),
+                            k=1
+                        )[0]
+                        category = category_mapping[category_key]
+                        print(f"Pulling item {item_number} of {total_items}.")
+                        main_logic(category)
+                elif choice == 2:
+                    os.system("cls" if os.name == "nt" else "clear")
+                    categories_with_weights = {
+                        "junk": 75,
+                        "ammo": 7,
+                        "healing_and_magic": 5,
+                        "melee_weapons": 4,
+                        "armor_and_defense": 4,
+                        "ranged_weapons": 4,
+                        "cursed_and_blessed_items": 1
+                    }
+                    category_mapping = {
+                        "melee_weapons": melee_weapons,
+                        "ranged_weapons": ranged_weapons,
+                        "ammo": ammo,
+                        "armor_and_defense": armor_and_defense,
+                        "healing_and_magic": healing_and_magic,
+                        "cursed_and_blessed_items": cursed_and_blessed_items,
+                        "junk": junk
+                    }
+                    total_items = random.randint(1, 5)
+                    for item_number in range(1, total_items + 1):
+                        os.system("cls" if os.name == "nt" else "clear")
+                        category_key = random.choices(
+                            list(categories_with_weights.keys()),
+                            weights=categories_with_weights.values(),
+                            k=1
+                        )[0]
+                        category = category_mapping[category_key]
+                        print(f"Pulling item {item_number} of {total_items}.")
+                        main_logic(category)
         elif choice == 2:
             manage_inventory()
         elif choice == 3:
