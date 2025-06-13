@@ -1,3 +1,5 @@
+version = "1.0.0"
+
 import os
 
 def clear_screen():
