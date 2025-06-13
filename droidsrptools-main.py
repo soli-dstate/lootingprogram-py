@@ -40,3 +40,5 @@ stats = [
     {"Name": "'Frankenstein' E-2", "HP": 25, "AHP": 50, "Damage": "1d20", "Movement Points": 7, "Processing Points": 25, "Bonus Instability": 30, "Possible Sentience": True, "Heat Per Day": 15, "Cooling Per Day": 15, "id": 18},
     {"Name": "'CyberPsychosis' E-3", "HP": 50, "AHP": 50, "Damage": "1d20+1d4", "Movement Points": 7, "Processing Points": 30, "Bonus Instability": 40, "Possible Sentience": True, "Heat Per Day": 5, "Cooling Per Day": 25, "id": 19},
 ]
+
+input("I do be doing the testing tho")
