@@ -8,7 +8,7 @@ import re
 import base64
 import uuid
 
-version = "1.0.0" # provide version number for comparing to github
+version = "1.0.0"
 
 developmentcopy = False
 
