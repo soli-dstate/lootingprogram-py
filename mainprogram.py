@@ -9,7 +9,7 @@ import uuid
 import zipfile
 import shutil
 
-version = "3.0.6"
+version = "3.0.7"
 
 developmentcopy = False
 
@@ -295,37 +295,37 @@ cursed_and_blessed_items = [
 ]
 
 junk = [
-    {"name": "Wood board", "value": 5, "description": "A cut board made from pine.", "rarity": "common", "minrand": 1, "maxrand": 5, "inventoryslots": 2, "id": 169},
-    {"name": "Steel tube", "value": 15, "description": "A rusted out chunk of steel tubing.", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 2, "id": 170},
-    {"name": "PVC pipe", "value": 2, "description": "A length of plastic tubing.", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 171},
-    {"name": "Sheet metal", "value": 25, "description": "A rusty piece of sheet metal, probably steel.", "rarity": "uncommon", "minrand": 1, "maxrand": 2, "inventoryslots": 5, "id": 172},
-    {"name": "Welding wire", "value": 50, "description": "A spindle of MIG welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 173},
-    {"name": "Welding wire", "value": 165, "description": "A length of TIG welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 174},
-    {"name": "Sling", "value": 15, "description": "A simple sling for weapons.", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 175, "slot": "shoulder", "addedslots": 2},
-    {"name": "Welding wire", "value": 50, "description": "A spindle of welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 176},
-    {"name": "Empty can", "value": 1, "description": "An empty can, appears to be made of tin, was probably food at some point.", "rarity": "common", "minrand": 1, "maxrand": 7, "inventoryslots": 1, "id": 177},
-    {"name": "Empty can", "value": 2, "description": "An empty can, appears to be made of aluminum, probably was a drink of sorts.", "rarity": "common", "minrand": 1, "maxrand": 12, "inventoryslots": 1, "id": 178},
-    {"name": "Empty plastic bag", "value": 0, "description": "A plastic bag that's weak and falling apart, no good for carrying items.", "rarity": "common", "minrand": 1, "maxrand": 1, "inventoryslots": 0, "id": 179},
-    {"name": "Candy bar", "value": 5, "description": "It's your favorite candy bar! Aw shucks, it's expired though. Probably tastes like the souls of the damned.", "rarity": "uncommon", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 180},
-    {"name": "Soda", "value": 7, "description": "It's your favorite soda! Aw shucks, it's expired though. Probably tastes like the blood of the damned. Flat too, flatter than your mom!", "rarity": "uncommon", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 181},
-    {"name": "Motor oil", "value": 15, "description": "A quart bottle of motor oil. It smells horrible and has metal chunks all up in it, it's probably used...", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 182},
-    {"name": "Glass bottle", "value": 2, "description": "An empty glass bottle that still has the stench of beer. You should smash it against a legion footsoldier's skull! Or your friends, I don't really care.", "rarity": "common", "minrand": 1, "maxrand": 24, "inventoryslots": 2, "id": 183},
-    {"name": "Screwdriver", "value": 15, "description": "A simple handheld screwdriver. Good for screwing and/or stabbing!", "rarity": "uncommon", "minrand": 1, "maxrand": 5, "inventoryslots": 1, "id": 184},
-    {"name": "Pry bar", "value": 15, "description": "A crowbar but it has a handle. Good for... uh... prying...?", "rarity": "uncommon", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 185},
-    {"name": "Drill", "value": 75, "description": "A battery operated drill. It's uh... a drill.", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 186},
-    {"name": "Handsaw", "value": 10, "description": "A saw. But hand operated. Good for dismemberment if you try hard enough!", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 187},
-    {"name": "Circular saw", "value": 10, "description": "A saw. But electric. This one is really good for dismemberment!", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 188},
-    {"name": "Grinder", "value": 35, "description": "A grinder. You use it to grind. Better get on that grind real quick! HAAAAH, I'm so funny.", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 189},
-    {"name": "Match", "value": 1, "description": "Aw yep, that's a match right there.", "rarity": "common", "minrand": 1, "maxrand": 50, "inventoryslots": 1, "id": 190},
-    {"name": "Wristwatch", "value": 10, "description": "A watch, but for your wrist? What a novel idea!", "rarity": "common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 191, "slot": "wrist"},
-    {"name": "Literally garbage", "value": 0, "description": "Yeah... that's literally garbage...", "rarity": "common", "minrand": 1, "maxrand": 15, "inventoryslots": 1, "id": 192},
-    {"name": "Car battery", "value": 125, "description": "A 12 volt lead acid car battery. It's kinda hefty.", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 3, "id": 193},
-    {"name": "Fusion cell", "value": 25000, "description": "A small, enclosed, controlled nuclear fusion in a tube providing a steady warmth and power output of well over 15 KW. Don't drop it!", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 7, "id": 194},
-    {"name": "Fusion battery", "value": 500, "description": "A tiny, enclosed, controlled nuclear fusion in a AA battery-sized tube, providing warmth and a power output of 500 W. Don't drop it!", "rarity": "rare", "minrand": 1, "maxrand": 5, "inventoryslots": 7, "id": 195},
-    {"name": "Gasoline", "value": 50, "description": "A jerry can full of gasoline that somehow hasn't evaporated or gone bad.", "rarity": "mythic", "minrand": 1, "maxrand": 2, "inventoryslots": 3, "id": 196},
-    {"name": "Rock", "value": 500, "description": "I call it big rock. Rhymes with Grug.", "rarity": "rare", "minrand": 1, "maxrand": 4, "inventoryslots": 15, "id": 197},
-    {"name": "Pebble", "value": 0.01, "description": "I call it pebble. Rhymes with Grug.", "rarity": "common", "minrand": 1, "maxrand": 1000000, "inventoryslots": 1, "id": 198},
-    {"name": "Pocket sand", "value": 1, "description": "It's a ziploc bag full of sand with 'Pocket Sand' labelled on it in sharpie. [Blinds enemies for 1 turn]", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 199},
+    {"name": "Wood board", "value": 5, "description": "A cut board made from pine.", "rarity": "common", "minrand": 1, "maxrand": 5, "inventoryslots": 2, "id": 168},
+    {"name": "Steel tube", "value": 15, "description": "A rusted out chunk of steel tubing.", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 2, "id": 169},
+    {"name": "PVC pipe", "value": 2, "description": "A length of plastic tubing.", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 170},
+    {"name": "Sheet metal", "value": 25, "description": "A rusty piece of sheet metal, probably steel.", "rarity": "uncommon", "minrand": 1, "maxrand": 2, "inventoryslots": 5, "id": 171},
+    {"name": "Welding wire", "value": 50, "description": "A spindle of MIG welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 172},
+    {"name": "Welding wire", "value": 165, "description": "A length of TIG welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 173},
+    {"name": "Sling", "value": 15, "description": "A simple sling for weapons.", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 174, "slot": "shoulder", "addedslots": 2},
+    {"name": "Welding wire", "value": 50, "description": "A spindle of welding wire.", "rarity": "rare", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 175},
+    {"name": "Empty can", "value": 1, "description": "An empty can, appears to be made of tin, was probably food at some point.", "rarity": "common", "minrand": 1, "maxrand": 7, "inventoryslots": 1, "id": 176},
+    {"name": "Empty can", "value": 2, "description": "An empty can, appears to be made of aluminum, probably was a drink of sorts.", "rarity": "common", "minrand": 1, "maxrand": 12, "inventoryslots": 1, "id": 177},
+    {"name": "Empty plastic bag", "value": 0, "description": "A plastic bag that's weak and falling apart, no good for carrying items.", "rarity": "common", "minrand": 1, "maxrand": 1, "inventoryslots": 0, "id": 178},
+    {"name": "Candy bar", "value": 5, "description": "It's your favorite candy bar! Aw shucks, it's expired though. Probably tastes like the souls of the damned.", "rarity": "uncommon", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 179},
+    {"name": "Soda", "value": 7, "description": "It's your favorite soda! Aw shucks, it's expired though. Probably tastes like the blood of the damned. Flat too, flatter than your mom!", "rarity": "uncommon", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 180},
+    {"name": "Motor oil", "value": 15, "description": "A quart bottle of motor oil. It smells horrible and has metal chunks all up in it, it's probably used...", "rarity": "common", "minrand": 1, "maxrand": 3, "inventoryslots": 1, "id": 181},
+    {"name": "Glass bottle", "value": 2, "description": "An empty glass bottle that still has the stench of beer. You should smash it against a legion footsoldier's skull! Or your friends, I don't really care.", "rarity": "common", "minrand": 1, "maxrand": 24, "inventoryslots": 2, "id": 182},
+    {"name": "Screwdriver", "value": 15, "description": "A simple handheld screwdriver. Good for screwing and/or stabbing!", "rarity": "uncommon", "minrand": 1, "maxrand": 5, "inventoryslots": 1, "id": 183},
+    {"name": "Pry bar", "value": 15, "description": "A crowbar but it has a handle. Good for... uh... prying...?", "rarity": "uncommon", "minrand": 1, "maxrand": 2, "inventoryslots": 1, "id": 184},
+    {"name": "Drill", "value": 75, "description": "A battery operated drill. It's uh... a drill.", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 185},
+    {"name": "Handsaw", "value": 10, "description": "A saw. But hand operated. Good for dismemberment if you try hard enough!", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 186},
+    {"name": "Circular saw", "value": 10, "description": "A saw. But electric. This one is really good for dismemberment!", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 187},
+    {"name": "Grinder", "value": 35, "description": "A grinder. You use it to grind. Better get on that grind real quick! HAAAAH, I'm so funny.", "rarity": "rare", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 188},
+    {"name": "Match", "value": 1, "description": "Aw yep, that's a match right there.", "rarity": "common", "minrand": 1, "maxrand": 50, "inventoryslots": 1, "id": 189},
+    {"name": "Wristwatch", "value": 10, "description": "A watch, but for your wrist? What a novel idea!", "rarity": "common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 190, "slot": "wrist"},
+    {"name": "Literally garbage", "value": 0, "description": "Yeah... that's literally garbage...", "rarity": "common", "minrand": 1, "maxrand": 15, "inventoryslots": 1, "id": 191},
+    {"name": "Car battery", "value": 125, "description": "A 12 volt lead acid car battery. It's kinda hefty.", "rarity": "uncommon", "minrand": 1, "maxrand": 1, "inventoryslots": 3, "id": 192},
+    {"name": "Fusion cell", "value": 25000, "description": "A small, enclosed, controlled nuclear fusion in a tube providing a steady warmth and power output of well over 15 KW. Don't drop it!", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 7, "id": 193},
+    {"name": "Fusion battery", "value": 500, "description": "A tiny, enclosed, controlled nuclear fusion in a AA battery-sized tube, providing warmth and a power output of 500 W. Don't drop it!", "rarity": "rare", "minrand": 1, "maxrand": 5, "inventoryslots": 7, "id": 194},
+    {"name": "Gasoline", "value": 50, "description": "A jerry can full of gasoline that somehow hasn't evaporated or gone bad.", "rarity": "mythic", "minrand": 1, "maxrand": 2, "inventoryslots": 3, "id": 195},
+    {"name": "Rock", "value": 500, "description": "I call it big rock. Rhymes with Grug.", "rarity": "rare", "minrand": 1, "maxrand": 4, "inventoryslots": 15, "id": 196},
+    {"name": "Pebble", "value": 0.01, "description": "I call it pebble. Rhymes with Grug.", "rarity": "common", "minrand": 1, "maxrand": 1000000, "inventoryslots": 1, "id": 197},
+    {"name": "Pocket sand", "value": 1, "description": "It's a ziploc bag full of sand with 'Pocket Sand' labelled on it in sharpie. [Blinds enemies for 1 turn]", "rarity": "mythic", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 198},
 ]
 
 traderspecificitems = [
@@ -344,7 +344,9 @@ all_tables = [
     test_table, melee_weapons, ranged_weapons, ammo, armor_and_defense,
     healing_and_magic, cursed_and_blessed_items, junk, traderspecificitems
 ]
+# Check for duplicate IDs and ensure IDs are consecutive (no jumps)
 seen_ids = {}
+all_ids = []
 for table in all_tables:
     for item in table:
         item_id = item.get("id")
@@ -355,6 +357,13 @@ for table in all_tables:
                     f"('{seen_ids[item_id]['name']}' and '{item['name']}')"
                 )
             seen_ids[item_id] = item
+            all_ids.append(item_id)
+positive_ids = sorted([i for i in all_ids if i >= 0])
+for idx in range(1, len(positive_ids)):
+    if positive_ids[idx] != positive_ids[idx - 1] + 1:
+        raise Exception(
+            f"Non-consecutive item id detected: {positive_ids[idx-1]} -> {positive_ids[idx]}"
+        )
 
 traderitemdescriptions = [
     {"id": 0, "traderdesc": "A favorite among the unsavory… or those with horrible dental hygiene."},
@@ -1496,7 +1505,7 @@ def manage_inventory():
                         os.remove(transfer_file)
                         return
                     transfer_time_str = item_data.get("transfer_time")
-                    if transfer_time_str:
+                    if transfer_time_str is not None:
                         try:
                             import calendar
                             transfer_time = time.strptime(transfer_time_str, "%Y-%m-%d %H:%M:%S")
@@ -1510,10 +1519,6 @@ def manage_inventory():
                             print(f"Error parsing transfer time: {e}")
                             os.remove(transfer_file)
                             return
-                    else:
-                        print("No transfer time found in file.")
-                        os.remove(transfer_file)
-                        return
                     if item_data.get("transfer_type") == "gold":
                         amount = item_data.get("amount", 0)
                         if amount > 0:
@@ -2846,102 +2851,113 @@ def devtools():
                 print(f"Error decoding save file: {e}")
         input("Press any key to continue...")
 
-def check_for_updates():
-    try:
-        response = requests.get("https://raw.githubusercontent.com/soli-dstate/lootingprogram-py/main/version.txt")
-        if response.status_code == 200:
-            latest_version = response.text.strip()
-            if latest_version != version:
-                if ver.parse(version) > ver.parse(latest_version):
+def check_for_updates(): # define function for checking updates
+    try: # use try incase any exceptions reveal themselves
+        response = requests.get("https://raw.githubusercontent.com/soli-dstate/lootingprogram-py/main/mainprogram.py") # check the mainprogram.py file from the github
+        if response.status_code == 200: # html code 200; means that the server came back okay
+            lines = response.text.splitlines() # splits everything into individual lines
+            latest_version = None # defines the latest version as none
+            for line in lines:
+                if line.strip().startswith("version"): # look for the line that says version
+                    parts = line.split("=") # split it with equal
+                    if len(parts) == 2: # divide it into x.x.x
+                        latest_version = parts[1].strip().strip('"').strip("'")
+                        break
+            if not latest_version: # provide a solution as to not throw an exception if something goes wrong
+                print("Could not determine latest version from mainprogram.py.")
+                return
+            if latest_version != version: # if the latest version and current version don't match, run this
+                if ver.parse(version) > ver.parse(latest_version): # if the latest version is bigger than the current version don't update anything (so i don't overwrite my code lolol)
                     print(f"Prerelease copy detected! Current version: {version}, Latest version: {latest_version}")
                     global developmentcopy
-                    developmentcopy = True
-                else:
+                    developmentcopy = True # set developmentcopy to true to enable dev tools
+                else: # we don't need to check for anything else as we only need to know if the current revision is later on than the one on github
                     print(f"Update available! Current version: {version}, Latest version: {latest_version}")
                     print("Would you like to update now? (y/n): ", end="")
-                    update_choice = input().strip().lower()
+                    update_choice = input().strip().lower() # get user input with a y/n statement
                     if update_choice != "y":
                         print("Update skipped. You can update later by restarting the program.")
                         return
                     print("Attempting to auto-update from GitHub...")
-                    current_dir = os.path.dirname(os.path.abspath(__file__))
-                    if os.name == "nt":
-                        exe_name = None
-                        for name in os.listdir(current_dir):
+                    current_dir = os.path.dirname(os.path.abspath(__file__)) # define where the script is located for later
+                    if os.name == "nt": # check if this is a windows system
+                        exe_name = None # define the exe name as none
+                        for name in os.listdir(current_dir): # look for the exe in the script's directory
                             if name.lower().endswith(".exe"):
-                                exe_name = name
+                                exe_name = name # set the exe's name to the name of the exe... that doesn't even make sense but just trust lol
                                 break
-                        if not exe_name:
+                        if not exe_name: # maybe you're a cool guy/gal/genderneutralword and wanna run the python files raw like me
                             for name in os.listdir(current_dir):
-                                if name.lower().endswith(".py"):
+                                if name.lower().endswith(".py"): # so now we lookin for the python
                                     exe_name = name
                                     break
-                        zip_url = None
+                        zip_url = None # define the zip url name as none
                         possible_names = [
+                            "loot python_compiled.zip",
                             "loot.python_compiled.zip",
                             "loot-python-compiled.zip",
                             "lootpython.zip",
                             "main.zip"
-                        ]
+                        ] # these are lists of names that i would probably set it to, this'll probably bite me in the ass in the future though lol
                         try:
-                            releases = requests.get("https://api.github.com/repos/soli-dstate/lootingprogram-py/releases").json()
+                            releases = requests.get("https://api.github.com/repos/soli-dstate/lootingprogram-py/releases").json() # better get the latest release from github and put it into a json
                             if isinstance(releases, list) and releases:
                                 for asset in releases[0].get("assets", []):
                                     if asset["name"].endswith(".zip"):
                                         zip_url = asset["browser_download_url"]
-                                        break
-                        except Exception:
+                                        break # try to find the zip url without doing it manually
+                        except Exception: # pass everything if there's an exception
                             pass
-                        if not zip_url:
+                        if not zip_url: # shit done hit the fan and now we gotta bruteforce this bad boy
                             for name in possible_names:
-                                test_url = f"https://github.com/soli-dstate/lootingprogram-py/raw/main/{name}"
+                                test_url = f"https://github.com/soli-dstate/lootingprogram-py/raw/main/{name}" # check every url possibility from the possible names
                                 r = requests.head(test_url)
-                                if r.status_code == 200:
-                                    zip_url = test_url
+                                if r.status_code == 200: # if we got code 200, we got a match!
+                                    zip_url = test_url # set the zip url to the url we tested and got a match for
                                     break
-                        if not zip_url:
-                            print("Could not find update zip file automatically. Please update manually.")
+                        if not zip_url: # maybe we found nothing because i'm an idiot and did something dumb
+                            print("Could not find update zip file automatically. Please update manually.") # better tell you so you can tell me
                             return
-                        print(f"Downloading update from: {zip_url}")
-                        r = requests.get(zip_url, stream=True)
-                        update_zip = os.path.join(current_dir, "update_temp.zip")
-                        with open(update_zip, "wb") as f:
-                            for chunk in r.iter_content(chunk_size=8192):
-                                f.write(chunk)
+                        print(f"Downloading update from: {zip_url}") # otherwise, we be downloading that update now yo
+                        r = requests.get(zip_url, stream=True) # now we actually gotta get the url
+                        update_zip = os.path.join(current_dir, "update_temp.zip") # we don't actually need everything that we download, so we can just delete this after we extract the exe
+                        with open(update_zip, "wb") as f: # open the zip file in write mode
+                            for chunk in r.iter_content(chunk_size=8192): # use 8192 byte chunks
+                                f.write(chunk) # write the data to each chunk
                         print("Download complete. Extracting update...")
-                        extract_folder = os.path.join(current_dir, "loot_update_temp")
-                        with zipfile.ZipFile(update_zip, "r") as zip_ref:
-                            zip_ref.extractall(extract_folder)
-                        new_file = None
+                        extract_folder = os.path.join(current_dir, "loot_update_temp") # define the folder to extract to
+                        with zipfile.ZipFile(update_zip, "r") as zip_ref: # use zipfile to extract the zip
+                            zip_ref.extractall(extract_folder) # extract it to the folder we defined earlier
+                        new_file = None # define the new file downloaded from the internet as none
                         for root, dirs, files in os.walk(extract_folder):
                             for file in files:
                                 if file.lower().endswith(".exe") or file.lower().endswith(".py"):
-                                    new_file = os.path.join(root, file)
+                                    new_file = os.path.join(root, file) # extract the exe or .py
                                     break
                             if new_file:
                                 break
-                        if not new_file:
+                        if not new_file: # make room for error and stuff
                             print("Could not find new program file in update. Update failed.")
                             return
                         if exe_name:
                             try:
-                                os.remove(os.path.join(current_dir, exe_name))
+                                os.remove(os.path.join(current_dir, exe_name)) # remove the old exe
                             except Exception:
                                 pass
-                        shutil.copy2(new_file, current_dir)
+                        shutil.copy2(new_file, current_dir) # copy the new exe or python file over
                         print(f"Updated file copied to {current_dir}.")
                         try:
-                            os.remove(update_zip)
+                            os.remove(update_zip) # remove the zip
                         except Exception:
                             pass
                         try:
-                            shutil.rmtree(extract_folder)
+                            shutil.rmtree(extract_folder) # remove the folder we extracted to
                         except Exception:
                             pass
                         print("Update complete. Please restart the program.")
                         input("Press Enter to exit...")
                         os._exit(0)
-                    else:
+                    else: # same as above but only for .py files as this is for non-windows systems. i don't develop this for mac cause none of y'all use it lol
                         print(f"Update available! Current version: {version}, Latest version: {latest_version}")
                         print("Would you like to update now? (y/n): ", end="")
                         update_choice = input().strip().lower()
@@ -2996,7 +3012,7 @@ def check_for_updates():
             else:
                 print("You are using the latest version.")
         else:
-            print("Failed to check for updates. Unable to access version file.")
+            print("Failed to check for updates. Unable to access mainprogram.py.")
     except Exception as e:
         print(f"Error checking for updates: {e}")
         
