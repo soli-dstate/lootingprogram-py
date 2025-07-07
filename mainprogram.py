@@ -9,16 +9,18 @@ import uuid
 import zipfile
 import shutil
 
-version = "3.0.7"
+version = "3.0.8"
 
 developmentcopy = False
 
+armorycredits = 10
 freeslots = 10
 current_inventory = []
 current_inventory_name = None
 storage = []
 tradershop = []
 questitems = []
+armory = []
 gold = 0
 saves_folder = "./saves"
 equipped_items = {
@@ -51,7 +53,8 @@ def save_inventory_to_file(inventory, file_name):
             "freeslots": freeslots,
             "storage": storage,
             "gold": gold,
-            "equipped_items": equipped_items
+            "equipped_items": equipped_items,
+            "armorycredits": armorycredits
         }
         encoded_data = base64.b64encode(json.dumps(data_to_save).encode("utf-8")).decode("utf-8")
         with open(file_path, "w") as file:
@@ -61,16 +64,20 @@ def save_inventory_to_file(inventory, file_name):
         print(f"Error saving inventory: {e}")
 
 def load_inventory_from_file(file_name):
-    global freeslots, storage, gold, equipped_items
+    global freeslots, storage, gold, equipped_items, armorycredits
     file_path = os.path.join(saves_folder, file_name)
     try:
         with open(file_path, "r") as file:
             encoded_data = file.read()
             data_loaded = json.loads(base64.b64decode(encoded_data).decode("utf-8"))
+            save_version = data_loaded.get("version", "0.0.0")
+            if (save_version < "3.0.8") and ("armorycredits" not in data_loaded):
+                data_loaded["armorycredits"] = 10
             freeslots = data_loaded.get("freeslots", 10)
             storage = data_loaded.get("storage", [])
             gold = data_loaded.get("gold", 0)
             equipped_items = data_loaded.get("equipped_items", {})
+            armorycredits = data_loaded.get("armorycredits", 10)
             return data_loaded.get("inventory", [])
     except FileNotFoundError:
         print(f"Error: File {file_path} does not exist.")
@@ -340,9 +347,273 @@ traderspecificitems = [
     {"name": "Golden Key", "value": 1000, "description": "Not sure where I got it from, but it's cool!", "rarity": "Common", "minrand": 1, "maxrand": 1, "inventoryslots": 1, "id": 165},
 ]
 
+armoryitems = [
+    {
+        "name": "M16A1",
+        "value": 150,
+        "description": "3 round burst assault rifle that takes STANAG magazines from the pre-flash era, remanufactured post flash.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 2,
+        "id": 199
+    },
+    {
+        "name": "M1 Garand",
+        "value": 250,
+        "description": "Remanufactured wooden frame pre-flash rifle firing a punchy .30-06 round, remanufactured post-flash.",
+        "rarity": "Uncommon",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 200
+    },
+    {
+        "name": "M14",
+        "value": 100,
+        "description": "Magazine fed wooden framed battle rifle firing .308 Winchester/7.62x51mm NATO, with a select fire that's useless due to the recoil.",
+        "rarity": "Uncommon",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 201
+    },
+    {
+        "name": "M14 EBR",
+        "value": 250,
+        "description": "Polymer-framed magazine fed battle rifle firing .308 Winchester/7.62x51mm NATO with select fire that's almost useless due to the recoil.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 202
+    },
+    {
+        "name": "M1014",
+        "value": 300,
+        "description": "Internal tube magazine 12 gauge semi automatic polymer framed shotgun.",
+        "rarity": "Common",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 203
+    },
+    {
+        "name": "Mossberg 590",
+        "value": 250,
+        "description": "Polymer framed pump action internal tube magazine 12 gauge shotgun.",
+        "rarity": "Common",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 204
+    },
+    {
+        "name": "Remington 870",
+        "value": 100,
+        "description": "Wooden framed internal tube magazine fed pump action 12 gauge shotgun.",
+        "rarity": "Uncommon",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 205
+    },
+    {
+        "name": "KSG-12",
+        "value": 450,
+        "description": "Internal tube magazine 12 gauge pump action shotgun with a large capacity of 14+1.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 206
+    },
+    {
+        "name": "M240B",
+        "value": 750,
+        "description": "Belt fed medium machine gun that fires 7.62x51mm NATO. Very heavy and very powerful.",
+        "rarity": "Legendary",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 5,
+        "id": 207
+    },
+    {
+        "name": "M249",
+        "value": 500,
+        "description": "Belt fed / magazine-fed light machine gun that fires 5.56x45mm NATO.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 4,
+        "id": 208
+    },
+    {
+        "name": "P90",
+        "value": 450,
+        "description": "A strange weapon firing a strange round. 5.7x28mm select fire compact submachine gun.",
+        "rarity": "Legendary",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 2,
+        "id": 209
+    },
+    {
+        "name": "MP5A3",
+        "value": 350,
+        "description": "Polymer-framed 9x19mm Parabellum select fire submachine gun with a retracting stock.",
+        "rarity": "Uncommon",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 2,
+        "id": 210
+    },
+    {
+        "name": "MP5K",
+        "value": 650,
+        "description": "High firerate polymer framed compact submachine gun with a forward grip and retracting stock.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 1,
+        "id": 211
+    },
+    {
+        "name": "MP5SD3",
+        "value": 350,
+        "description": "Internally suppressed 9x19mm Parabellum submachine gun with select fire.",
+        "rarity": "Legendary",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 2,
+        "id": 212
+    },
+    {
+        "name": "G3A4",
+        "value": 650,
+        "description": "Select fire polymer framed retracting stock battle rifle firing 7.62x51mm NATO.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 213
+    },
+    {
+        "name": "FAL",
+        "value": 350,
+        "description": "The right arm of the free world. 7.62x51mm NATO wooden framed select fire battle rifle.",
+        "rarity": "Common",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 214
+    },
+    {
+        "name": "HK416",
+        "value": 650,
+        "description": "Heckler & Koch variant of the colt M4 carbine. 5.56x45mm polymer framed select fire assault rifle.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 2,
+        "id": 215
+    },
+    {
+        "name": "M4 Carbine",
+        "value": 250,
+        "description": "Old 3 round burst assault rifle, remanufactured post-flash. Fires 5.56x45mm NATO with a polymer frame and retractable stock.",
+        "rarity": "Common",
+        "minrand": 1,
+        "maxrand": 2,
+        "inventoryslots": 2,
+        "id": 216
+    },
+    {
+        "name": "HK69A1",
+        "value": 250,
+        "description": "40mm grenade launcher, either standalone or mounted on the G3. Carries a single grenade.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 2,
+        "id": 217
+    },
+    {
+        "name": "M79",
+        "value": 750,
+        "description": "Dusty old grenade launcher, somehow survived this long. These were never remanufactured post-flash, this is an original one from pre-flash.",
+        "rarity": "Mythic",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 218
+    },
+    {
+        "name": "M203",
+        "value": 250,
+        "description": "40mm underbarrel grenade launcher made for AR-platform rifles.",
+        "rarity": "Uncommon",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 2,
+        "id": 219
+    },
+    {
+        "name": "M320",
+        "value": 250,
+        "description": "Standalone 40mm grenade launcher.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 220
+    },
+    {
+        "name": "MGL",
+        "value": 750,
+        "description": "A 40mm grenade launcher with a revolver style, holds 6 grenades.",
+        "rarity": "Mythic",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 4,
+        "id": 221
+    },
+    {
+        "name": "AT4",
+        "value": 250,
+        "description": "Single use disposable unguided recoilless anti tank weapon.",
+        "rarity": "Rare",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 3,
+        "id": 222
+    },
+    {
+        "name": "FIM-92 Stinger",
+        "value": 450,
+        "description": "Man portable infrared homing surface-to-air missile that can only tackle air targets. Maybe decent for taking out a dragon?",
+        "rarity": "Legendary",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 7,
+        "id": 223
+    },
+    {
+        "name": "MRE",
+        "value": 15,
+        "description": "Standard issue meal ready to eat, heals a medium amount of health.",
+        "rarity": "Common",
+        "minrand": 1,
+        "maxrand": 1,
+        "inventoryslots": 1,
+        "id": 224
+    }
+]
+
 all_tables = [
     test_table, melee_weapons, ranged_weapons, ammo, armor_and_defense,
-    healing_and_magic, cursed_and_blessed_items, junk, traderspecificitems
+    healing_and_magic, cursed_and_blessed_items, junk, traderspecificitems,
+    armoryitems
 ]
 # Check for duplicate IDs and ensure IDs are consecutive (no jumps)
 seen_ids = {}
@@ -525,6 +796,22 @@ traderitemdescriptions = [
     {"id": 156, "traderdesc": "A bag with an anglerfish emblem on the back of it."},
     {"id": 166, "traderdesc": "I'm not sure what this is..."},
     {"id": 167, "traderdesc": "I'm not sure what this is..."},
+]
+
+armoryids = [
+    99,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    77,
+    80,
+    86,
+    87,
 ]
 
 caliberinfo = [
@@ -999,6 +1286,61 @@ def traderitems():
             print("Trader save file created.")
         except Exception as e:
             print(f"Error creating trader save file: {e}")
+            
+def armoryitems_refresh():
+    global armory
+    armory_save_file = os.path.join(saves_folder, "armory.save")
+    armory_pool = []
+    armory_pool.extend(armoryitems)
+    seen_ids = set(item["id"] for item in armory_pool if "id" in item)
+    for table in all_tables:
+        for item in table:
+            if item.get("id") in armoryids and item.get("id") not in seen_ids:
+                armory_pool.append(item)
+                seen_ids.add(item["id"])
+    if os.path.exists(armory_save_file):
+        try:
+            with open(armory_save_file, "r") as file:
+                encoded_data = file.read()
+                armory_data = json.loads(base64.b64decode(encoded_data).decode("utf-8"))
+                last_refresh_time = armory_data.get("last_refresh_time")
+                if last_refresh_time:
+                    last_refresh_time_struct = time.strptime(last_refresh_time, "%Y-%m-%d %H:%M:%S")
+                    current_time = time.gmtime()
+                    time_difference = time.mktime(current_time) - time.mktime(last_refresh_time_struct)
+                    if time_difference < 12 * 3600:
+                        armory = armory_data.get("items", [])
+                        return
+                items = []
+                for _ in range(20):
+                    item = get_random_item(armory_pool)
+                    items.append(item)
+                armory_data["items"] = items
+                armory = items
+                armory_data["last_refresh_time"] = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                encoded_data = base64.b64encode(json.dumps(armory_data).encode("utf-8")).decode("utf-8")
+                with open(armory_save_file, "w") as file_w:
+                    file_w.write(encoded_data)
+                print("Armory items have been refreshed since last time you've visited!")
+                return
+        except Exception as e:
+            print(f"Error reading armory save file: {e}")
+    try:
+        items = []
+        for _ in range(20):
+            item = get_random_item(armory_pool)
+            items.append(item)
+        armory_data = {
+            "last_refresh_time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
+            "items": items
+        }
+        armory = items
+        encoded_data = base64.b64encode(json.dumps(armory_data).encode("utf-8")).decode("utf-8")
+        with open(armory_save_file, "w") as file:
+            file.write(encoded_data)
+        print("Armory save file created.")
+    except Exception as e:
+        print(f"Error creating armory save file: {e}")
 
 def get_random_item(table):
     rarity_weights = {
@@ -1817,12 +2159,18 @@ def trader():
                     break
                 print("Your Inventory:")
                 for i, item in enumerate(current_inventory, start=1):
-                    print(f"[{i}] {item['name']} (Rarity: {item['rarity']}, Value: ${item['value']} ea, Quantity: {item['quantity']}, Sell Value: ${item['value']//2} ea)")
+                    armory_flag = item.get("armoryitem", False)
+                    armory_note = " [ARMORY ITEM - Cannot Sell]" if armory_flag else ""
+                    print(f"[{i}] {item['name']} (Rarity: {item['rarity']}, Value: ${item['value']} ea, Quantity: {item['quantity']}, Sell Value: ${item['value']//2} ea){armory_note}")
                 print(f"[{len(current_inventory)+1}] Back")
                 choice = get_user_choice(len(current_inventory)+1)
                 if choice == len(current_inventory)+1:
                     break
                 selected_item = current_inventory[choice-1]
+                if selected_item.get("armoryitem", False):
+                    print("You cannot sell armory items. Please return them to the armory instead.")
+                    input("Press any key to continue...")
+                    continue
                 print(f"How many '{selected_item['name']}' would you like to sell? (1-{selected_item['quantity']}):")
                 qty = get_user_choice(selected_item['quantity'])
                 sell_value = (selected_item['value'] // 2) * qty
@@ -2806,7 +3154,7 @@ def devtools():
                         main_logic(category)
                 elif choice == 3:
                     os.system("cls" if os.name == "nt" else "clear")
-                    categories = ["ammo", "healing_and_magic", "melee_weapons", "armor_and_defense", "ranged_weapons", "cursed_and_blessed_items", "traderspecificitems"]
+                    categories = ["ammo", "healing_and_magic", "melee_weapons", "armor_and_defense", "ranged_weapons", "cursed_and_blessed_items", "traderspecificitems", "junk"]
                     print("Select a category:")
                     print_menu(categories)
                     category_choice = get_user_choice(len(categories))
@@ -2818,7 +3166,8 @@ def devtools():
                         "armor_and_defense": armor_and_defense,
                         "healing_and_magic": healing_and_magic,
                         "cursed_and_blessed_items": cursed_and_blessed_items,
-                        "traderspecificitems": traderspecificitems
+                        "traderspecificitems": traderspecificitems,
+                        "junk": junk
                     }
                     selected_category = category_mapping[category]
                     print("Select an item to add:")
@@ -3016,6 +3365,99 @@ def check_for_updates(): # define function for checking updates
     except Exception as e:
         print(f"Error checking for updates: {e}")
         
+def armory():
+    global armorycredits, freeslots, current_inventory, current_inventory_name, armory
+    while True:
+        os.system("cls" if os.name == "nt" else "clear")
+        opts = ["Check Out Item", "Return Item", "Exit"]
+        armoryitems_refresh()
+        print(f"You have {armorycredits} credits left.")
+        print("")
+        print_menu(opts)
+        choice = get_user_choice(len(opts))
+        if choice == 1:
+            os.system("cls" if os.name == "nt" else "clear")
+            if armorycredits <= 0:
+                print("You have no armory credits left.")
+                input("Press any key to continue...")
+                continue
+            if not armory:
+                print("No items available in the armory.")
+                input("Press any key to continue...")
+                continue
+            print("Available Armory Items:")
+            for i, item in enumerate(armory, 1):
+                print(f"[{i}] {item['name']} (Rarity: {item['rarity']}, Value: ${item['value']}, Quantity: {item['quantity']})")
+            print(f"[{len(armory)+1}] Back")
+            item_choice = get_user_choice(len(armory)+1)
+            if item_choice == len(armory)+1:
+                continue
+            selected_item = armory[item_choice-1]
+            print(f"How many '{selected_item['name']}' would you like to check out? (1-{selected_item['quantity']}):")
+            qty = get_user_choice(selected_item['quantity'])
+            total_slots = selected_item['inventoryslots'] * qty
+            if freeslots < total_slots:
+                print("Not enough free slots in your inventory.")
+                input("Press any key to continue...")
+                continue
+            if armorycredits < qty:
+                print(f"Not enough armory credits. You have {armorycredits} credits.")
+                input("Press any key to continue...")
+                continue
+            item_copy = selected_item.copy()
+            item_copy["quantity"] = qty
+            item_copy["armoryitem"] = True
+            inv_item = next((i for i in current_inventory if i["name"] == item_copy["name"] and i.get("armoryitem")), None)
+            if inv_item:
+                inv_item["quantity"] += qty
+            else:
+                current_inventory.append(item_copy)
+            selected_item["quantity"] -= qty
+            freeslots -= total_slots
+            armorycredits -= qty
+            print(f"Checked out {qty}x {item_copy['name']} from the armory.")
+            if selected_item["quantity"] == 0:
+                armory.pop(item_choice-1)
+            if current_inventory_name:
+                save_inventory_to_file(current_inventory, current_inventory_name)
+            input("Press any key to continue...")
+        elif choice == 2:
+            os.system("cls" if os.name == "nt" else "clear")
+            armory_items_in_inventory = [item for item in current_inventory if item.get("armoryitem")]
+            if not armory_items_in_inventory:
+                print("You have no armory items to return.")
+                input("Press any key to continue...")
+                continue
+            print("Armory Items in Inventory:")
+            for i, item in enumerate(armory_items_in_inventory, 1):
+                print(f"[{i}] {item['name']} (Quantity: {item['quantity']})")
+            print(f"[{len(armory_items_in_inventory)+1}] Back")
+            item_choice = get_user_choice(len(armory_items_in_inventory)+1)
+            if item_choice == len(armory_items_in_inventory)+1:
+                continue
+            selected_item = armory_items_in_inventory[item_choice-1]
+            print(f"How many '{selected_item['name']}' would you like to return? (1-{selected_item['quantity']}):")
+            qty = get_user_choice(selected_item['quantity'])
+            selected_item["quantity"] -= qty
+            freeslots += selected_item["inventoryslots"] * qty
+            armorycredits += qty
+            armory_item = next((i for i in armory if i["name"] == selected_item["name"]), None)
+            if armory_item:
+                armory_item["quantity"] += qty
+            else:
+                item_copy = selected_item.copy()
+                item_copy["quantity"] = qty
+                item_copy.pop("armoryitem", None)
+                armory.append(item_copy)
+            if selected_item["quantity"] == 0:
+                current_inventory.remove(selected_item)
+            print(f"Returned {qty}x {selected_item['name']} to the armory.")
+            if current_inventory_name:
+                save_inventory_to_file(current_inventory, current_inventory_name)
+            input("Press any key to continue...")
+        elif choice == 3:
+            break
+        
 def main():
     global current_inventory_name, developmentcopy
     while True:
@@ -3025,9 +3467,9 @@ def main():
         print(f"Current Inventory: {current_inventory_name or 'None'}")
         print("")
         if developmentcopy:
-            main_options = ["Easy Loot", "Inventory Management", "Trading", "Bar", "Exit", "Development Options"]
+            main_options = ["Easy Loot", "Inventory Management", "Trading", "Bar", "Armory", "Exit", "Development Options"]
         else:
-            main_options = ["Easy Loot", "Inventory Management", "Trading", "Bar", "Exit"]
+            main_options = ["Easy Loot", "Inventory Management", "Trading", "Bar", "Armory", "Exit"]
         print_menu(main_options)
         choice = get_user_choice(len(main_options))
 
@@ -3115,8 +3557,14 @@ def main():
             else:
                 bar()
         elif choice == 5:
+            if not current_inventory_name:
+                print("No inventory loaded! Please load or create an inventory first.")
+                input("Press any key to continue...")
+            else:
+                armory()
+        elif choice == 6:
             break
-        elif choice == 6 and developmentcopy == True:
+        elif choice == 7 and developmentcopy == True:
             if not current_inventory_name:
                 print("No inventory loaded! Please load or create an inventory first.")
                 input("Press any key to continue...")
