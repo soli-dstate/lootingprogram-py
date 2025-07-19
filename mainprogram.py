@@ -9,7 +9,7 @@ import uuid
 import zipfile
 import shutil
 
-version = "3.0.8"
+version = "3.0.9"
 
 developmentcopy = False
 
@@ -40,6 +40,14 @@ incompatible_saves = [
     "3.0.0developmentcopy",
     "3.0.0developmentcopy2",
     "3.0.0",
+    "3.0.1",
+    "3.0.2",
+    "3.0.3",
+    "3.0.4",
+    "3.0.5",
+    "3.0.6",
+    "3.0.7",
+    "3.0.8",
 ]
 
 os.makedirs(saves_folder, exist_ok=True)
@@ -49,6 +57,7 @@ def save_inventory_to_file(inventory, file_name):
     try:
         data_to_save = {
             "version": version,
+            "name": file_name,
             "inventory": inventory,
             "freeslots": freeslots,
             "storage": storage,
@@ -73,6 +82,12 @@ def load_inventory_from_file(file_name):
             save_version = data_loaded.get("version", "0.0.0")
             if (save_version < "3.0.8") and ("armorycredits" not in data_loaded):
                 data_loaded["armorycredits"] = 10
+            save_name = data_loaded.get("name")
+            file_name_no_ext = os.path.splitext(file_name)[0]
+            save_name_no_ext = os.path.splitext(save_name)[0] if save_name else None
+            if save_name_no_ext and save_name_no_ext != file_name_no_ext:
+                print(f"Warning: Save file name '{file_name_no_ext}' does not match the 'name' field in the save ('{save_name_no_ext}'). Not loading this save.")
+                return None
             freeslots = data_loaded.get("freeslots", 10)
             storage = data_loaded.get("storage", [])
             gold = data_loaded.get("gold", 0)
@@ -94,9 +109,13 @@ if os.path.exists(previous_inventory_file):
             if save_name:
                 save_path = os.path.join(saves_folder, save_name)
                 if os.path.exists(save_path):
-                    current_inventory_name = save_name
-                    current_inventory = load_inventory_from_file(current_inventory_name) or []
-                    print(f"Loaded previous inventory: {current_inventory_name}")
+                    loaded_inventory = load_inventory_from_file(save_name)
+                    if loaded_inventory is not None:
+                        current_inventory_name = save_name
+                        current_inventory = loaded_inventory
+                        print(f"Loaded previous inventory: {current_inventory_name}")
+                    else:
+                        print(f"Previous inventory '{save_name}' was not loaded due to a mismatch or error.")
                 else:
                     print(f"Save file '{save_name}' not found in the saves folder.")
     except Exception as e:
@@ -615,7 +634,6 @@ all_tables = [
     healing_and_magic, cursed_and_blessed_items, junk, traderspecificitems,
     armoryitems
 ]
-# Check for duplicate IDs and ensure IDs are consecutive (no jumps)
 seen_ids = {}
 all_ids = []
 for table in all_tables:
@@ -1505,16 +1523,60 @@ def manage_inventory():
                             encoded_data = file.read()
                             data_loaded = json.loads(base64.b64decode(encoded_data).decode("utf-8"))
                             save_version = data_loaded.get("version", None)
+                            save_name = data_loaded.get("name")
+                            file_name_no_ext = os.path.splitext(selected_file)[0]
+                            save_name_no_ext = os.path.splitext(save_name)[0] if save_name else None
+                            if save_name_no_ext and save_name_no_ext != file_name_no_ext:
+                                print(f"Warning: Save file name '{file_name_no_ext}' does not match the 'name' field in the save ('{save_name_no_ext}'). Not loading this save.")
+                                input("Press any key to continue...")
+                                continue
                             if save_version in incompatible_saves:
                                 print(f"Save file '{selected_file}' is marked as incompatible with the current version.")
+                                print("This save might be able to be migrated, would you like to run the migration tool?")
+                                choice = input("Y/N: ")
+                                if choice.lower() == "y":
+                                    print("Checking for migration tool...")
+                                    modules_dir = os.path.join(os.path.dirname(__file__), "modules")
+                                    os.makedirs(modules_dir, exist_ok=True)
+                                    savemigrator_path = os.path.join(modules_dir, "savemigrator.py")
+                                    if not os.path.exists(savemigrator_path):
+                                        print("Downloading migration tool...")
+                                        savemigrator_url = "https://github.com/soli-dstate/lootingprogram-py/raw/main/savemigrator.py"
+                                        try:
+                                            print(f"Downloading savemigrator.py to {savemigrator_path}...")
+                                            response = requests.get(savemigrator_url)
+                                            if response.status_code == 200:
+                                                with open(savemigrator_path, "wb") as f:
+                                                    f.write(response.content)
+                                                print("savemigrator.py downloaded successfully.")
+                                            else:
+                                                print(f"Failed to download savemigrator.py: HTTP {response.status_code}")
+                                        except Exception as e:
+                                            print(f"Failed to download savemigrator.py: {e}")
+                                    try:
+                                        import importlib.util
+                                        spec = importlib.util.spec_from_file_location("savemigrator", savemigrator_path)
+                                        savemigrator = importlib.util.module_from_spec(spec)
+                                        spec.loader.exec_module(savemigrator)
+                                        if hasattr(savemigrator, "main"):
+                                            savemigrator.main()
+                                        else:
+                                            print("savemigrator.py does not have a main() function.")
+                                    except Exception as e:
+                                        print(f"Failed to load or run savemigrator.py: {e}")
                                 input("Press any key to continue...")
                                 continue
                     except Exception as e:
                         print(f"Error checking save file compatibility: {e}")
                         input("Press any key to continue...")
                         continue
+                    loaded_inventory = load_inventory_from_file(selected_file)
+                    if loaded_inventory is None:
+                        print("Failed to load inventory. Please check the save file.")
+                        input("Press any key to continue...")
+                        continue
                     current_inventory_name = selected_file
-                    current_inventory = load_inventory_from_file(current_inventory_name) or []
+                    current_inventory = loaded_inventory
                     if not current_inventory_name:
                         print("No inventory loaded! Please load or create an inventory first.")
                         input("Press any key to continue...")
