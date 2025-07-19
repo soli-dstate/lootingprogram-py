@@ -1,11 +1,23 @@
 import os
+import sys
 import base64
 import json
 
 EXCLUDED_FILES = ["previousinventory.save", "trader.save", "transfers.save"]
 
+def get_base_dir():
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        return os.path.dirname(sys.executable)
+    else:
+        return os.path.dirname(__file__)
+
 def main():
-    saves_dir = os.path.join(os.path.dirname(__file__), '..', 'saves')
+    base_dir = get_base_dir()
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        saves_dir = os.path.join(base_dir, 'saves')
+    else:
+        saves_dir = os.path.join(base_dir, '..', 'saves')
+    saves_dir = os.path.abspath(saves_dir)
     saves = [
         f for f in os.listdir(saves_dir)
         if os.path.isfile(os.path.join(saves_dir, f)) and f not in EXCLUDED_FILES
