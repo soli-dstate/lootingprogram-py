@@ -1,3 +1,3 @@
-# lootingprogram-py
+# 25% complete
 
-A simple program that I've made in python to assist with roleplay.
+this is a total rewrite of the original program... of which itself had been rewritten like 4 times now. it's okay tho
