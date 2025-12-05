@@ -1,3 +1,3 @@
-# lootingprogram-py
+# DEPRECATED!!!!!!
 
-A simple program that I've made in python to assist with roleplay.
+This is an antiquated console-based version of the program. A new version called DOOM-Tools is being made.
